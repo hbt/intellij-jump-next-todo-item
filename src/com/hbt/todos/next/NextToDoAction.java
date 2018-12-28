@@ -18,9 +18,6 @@ import org.apache.log4j.Logger;
 import java.util.*;
 
 
-// TODO(hbt) ENHANCE PreviousToDoAction
-// TODO(hbt) ENHANCE github + readme + topics + jar
-
 public class NextToDoAction extends ToDoCommonAction {
 
 
