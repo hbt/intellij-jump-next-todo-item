@@ -12,7 +12,7 @@ public class MyLogger {
         if (log == null) {
 
             log = (Logger) Logger.getInstance(MyLogger.class);
-            log.setLevel(Level.ALL);
+//            log.setLevel(Level.ALL);
             ConsoleAppender ca = new ConsoleAppender();
             PatternLayout layout = new PatternLayout("%d{HH:mm:ss} %-5p %c{1}:%L - %m%n");
             ca.setLayout(layout);
