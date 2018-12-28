@@ -16,7 +16,7 @@ Jump between todos in your code (like bookmarked locations).
 * map actions to keys 
 ```
 nnoremap gj :action com.hbt.todos.next.PreviousToDoAction<CR>
-nnoremap gk :action com.hbt.todos.next.NextToDoAction<CR>
+nnoremap gk :action com.hbt.todos.next.NextToDo<CR>
 ```
 * jump between todos in order
 
