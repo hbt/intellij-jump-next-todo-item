@@ -6,7 +6,7 @@
 
   <description><![CDATA[
   Adds action to jump to next todo item. 
-    ]]></description>
+   ]]></description>
 
   <!--<change-notes><![CDATA[-->
       <!--Add change notes here.<br>-->
@@ -29,10 +29,14 @@
 
   <actions>
     <!-- Add your actions here -->
-    <action id="com.hbt.todos.next.NextToDo" class="NextToDoAction" text="NextToDoAction"
+    <action id="com.hbt.todos.next.NextToDo" class="com.hbt.todos.next.NextToDoAction" text="NextToDoAction"
             description="focus on next todo item">
       <add-to-group group-id="EditorActions" anchor="first"/>
       <keyboard-shortcut keymap="$default" first-keystroke="alt PERIOD"/>
+    </action>
+    <action id="com.hbt.todos.next.PreviousToDoAction" class="com.hbt.todos.next.PreviousToDoAction"
+            text="PreviousToDoAction" description="jump to previous todo item">
+      <keyboard-shortcut keymap="$default" first-keystroke="alt COMMA"/>
     </action>
   </actions>
 
