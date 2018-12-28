@@ -1,0 +1,39 @@
+<idea-plugin>
+  <id>com.hbt.todos.next</id>
+  <name>Next Todo</name>
+  <version>1.0</version>
+  <vendor email="none@yourcompany.com" url="">hbt</vendor>
+
+  <description><![CDATA[
+  Adds action to jump to next todo item. 
+    ]]></description>
+
+  <!--<change-notes><![CDATA[-->
+      <!--Add change notes here.<br>-->
+      <!--<em>most HTML tags may be used</em>-->
+    <!--]]>-->
+  <!--</change-notes>-->
+
+  <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/build_number_ranges.html for description -->
+  <idea-version since-build="173.0"/>
+
+  <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
+       on how to target different products -->
+  <!-- uncomment to enable plugin in all products
+  <depends>com.intellij.modules.lang</depends>
+  -->
+
+  <extensions defaultExtensionNs="com.intellij">
+    <!-- Add your extensions here -->
+  </extensions>
+
+  <actions>
+    <!-- Add your actions here -->
+    <action id="com.hbt.todos.next.NextToDo" class="NextToDoAction" text="NextToDoAction"
+            description="focus on next todo item">
+      <add-to-group group-id="EditorActions" anchor="first"/>
+      <keyboard-shortcut keymap="$default" first-keystroke="alt PERIOD"/>
+    </action>
+  </actions>
+
+</idea-plugin>
