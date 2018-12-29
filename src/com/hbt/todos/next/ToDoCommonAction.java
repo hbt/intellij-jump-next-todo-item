@@ -52,6 +52,22 @@ public abstract class ToDoCommonAction extends AnAction {
         return nextIndex;
     }
 
+    static HashMap<Project, ArrayList<TodoItemNode>> cache = new HashMap<>();
+    
+    public void recursiveGet(Project p, AbstractTreeStructure structure, Object obj) {
+        Object[] children = structure.getChildElements(obj);
+        for(int i =0; i< children.length; i++) {
+            //add 
+            if(children[i] instanceof TodoItemNode)
+            {
+
+                ArrayList<TodoItemNode> todoItemNodes = cache.get(p);
+                todoItemNodes.add((TodoItemNode) children[i]);
+            }
+            recursiveGet(p, structure, children[i]);
+        }
+    }
+
     public ArrayList buildList(Project project) {
         ArrayList todosMap = new ArrayList();
 
@@ -63,18 +79,17 @@ public abstract class ToDoCommonAction extends AnAction {
             all.init();
             AbstractTreeStructure structure = all.getTodoTreeStructure();
             ((TodoTreeStructure) structure).setFlattenPackages(true);
+            
+            cache.clear();
+            cache.put(project,new ArrayList<TodoItemNode>());
+            recursiveGet(project, structure , structure.getRootElement());
+            
 
-            TodoItemNode current = all.getFirstPointerForElement(structure.getRootElement());
-            if (current != null) {
-                TodoItemNode next = current;
-                do {
-
-                    todos.add(next.getValue());
-                    next = all.getNextPointer(next);
-
-                } while (next != null);
-
-            }
+            ArrayList<TodoItemNode> todoItemNodes = cache.get(project);
+            
+            todoItemNodes.forEach((todo) -> {
+                todos.add(todo.getValue());
+            });
 
         }
 
