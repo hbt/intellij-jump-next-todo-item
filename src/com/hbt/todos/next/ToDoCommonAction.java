@@ -52,7 +52,7 @@ public abstract class ToDoCommonAction extends AnAction {
         return nextIndex;
     }
 
-    static HashMap<Project, ArrayList<TodoItemNode>> cache = new HashMap<>();
+    static HashMap<String, ArrayList<TodoItemNode>> cache = new HashMap<>();
     
     public void recursiveGet(Project p, AbstractTreeStructure structure, Object obj) {
         Object[] children = structure.getChildElements(obj);
@@ -61,7 +61,7 @@ public abstract class ToDoCommonAction extends AnAction {
             if(children[i] instanceof TodoItemNode)
             {
 
-                ArrayList<TodoItemNode> todoItemNodes = cache.get(p);
+                ArrayList<TodoItemNode> todoItemNodes = cache.get(p.getLocationHash());
                 todoItemNodes.add((TodoItemNode) children[i]);
             }
             recursiveGet(p, structure, children[i]);
@@ -81,11 +81,11 @@ public abstract class ToDoCommonAction extends AnAction {
             ((TodoTreeStructure) structure).setFlattenPackages(true);
             
             cache.clear();
-            cache.put(project,new ArrayList<TodoItemNode>());
+            cache.put(project.getLocationHash(),new ArrayList<TodoItemNode>());
             recursiveGet(project, structure , structure.getRootElement());
             
 
-            ArrayList<TodoItemNode> todoItemNodes = cache.get(project);
+            ArrayList<TodoItemNode> todoItemNodes = cache.get(project.getLocationHash());
             
             todoItemNodes.forEach((todo) -> {
                 todos.add(todo.getValue());
