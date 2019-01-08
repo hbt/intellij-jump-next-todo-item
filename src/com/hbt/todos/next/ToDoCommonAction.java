@@ -1,15 +1,33 @@
 package com.hbt.todos.next;
 
+import com.intellij.ide.todo.*;
+import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.editor.Document;
+import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vcs.VcsBundle;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.checkin.CheckinHandler;
+import com.intellij.openapi.vcs.checkin.TodoCheckinHandlerWorker;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.search.TodoAttributes;
+import com.intellij.psi.search.TodoAttributesUtil;
+import com.intellij.psi.search.TodoItem;
+import com.intellij.psi.search.TodoPattern;
 import org.jetbrains.annotations.NotNull;
 
 import com.hbt.utils.MyLogger;
 import com.intellij.ide.bookmarks.Bookmark;
 import com.intellij.ide.bookmarks.BookmarkManager;
-import com.intellij.ide.todo.AllTodosTreeBuilder;
-import com.intellij.ide.todo.SmartTodoItemPointer;
-import com.intellij.ide.todo.TodoTreeStructure;
 import com.intellij.ide.todo.nodes.TodoItemNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -19,10 +37,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.treeStructure.Tree;
 import org.apache.log4j.Logger;
 
+import javax.swing.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
 import java.util.*;
 
 public abstract class ToDoCommonAction extends AnAction {
 
+    // TODO(hbt) NEXT fix so it displays the correct class e.g  -- com/intellij/ide/todo/TodoPanel.java:69
+//    protected static final Logger LOG = Logger.getInstance(TodoPanel.class);
     public static Logger log = MyLogger.getLogger();
     public static HashMap<Project, Integer> last = new HashMap();
 
@@ -68,45 +91,85 @@ public abstract class ToDoCommonAction extends AnAction {
         }
     }
 
+    protected MyTreeBuilder createTreeBuilder(JTree tree, Project project) {
+
+        String preselect = PropertiesComponent.getInstance(project).getValue("TODO_SCOPE");
+        ScopeChooserCombo myScopes = new ScopeChooserCombo(project, false, true, preselect);
+        myScopes.setCurrentSelection(false);
+        myScopes.setUsageView(false);
+        
+//        ScopeBasedTodosTreeBuilder builder = new ScopeBasedTodosTreeBuilder(tree, project, myScopes);
+        MyTreeBuilder builder = new MyTreeBuilder(tree, project, myScopes);
+        builder.init();
+        return builder;
+
+        // Note(hbt) fails because method is protected -- have to add the MyTreeBuilder class to the jar https://stackoverflow.com/questions/7076414/java-lang-illegalaccesserror-tried-to-access-method/7076538
+
+//            DefaultTreeModel model = new DefaultTreeModel(new DefaultMutableTreeNode());
+//            JTree tree = new Tree(model);
+//            MyTreeBuilder builder = this.createTreeBuilder(tree, project);
+//            TodoFilter filter = new TodoFilter();
+//            TodoPattern todoPattern = new TodoPattern("TodoAttributesUtil.createDefault()", TodoAttributesUtil.createDefault(), false);
+//            filter.addTodoPattern(todoPattern);
+//            builder.setTodoFilter2(filter);
+//            builder.init();
+    }
+
     public ArrayList buildList(Project project) {
         ArrayList todosMap = new ArrayList();
+        String pattern = "\\b.*todo\\b.*hbt\\b.*NEXT\\b.*";
 
         ArrayList<SmartTodoItemPointer> todos = new ArrayList();
-
+        
         {
-
-            AllTodosTreeBuilder all = new AllTodosTreeBuilder(new Tree(), project);
-            all.init();
-            AbstractTreeStructure structure = all.getTodoTreeStructure();
-            ((TodoTreeStructure) structure).setFlattenPackages(true);
             
-            cache.clear();
-            cache.put(project.getLocationHash(),new ArrayList<TodoItemNode>());
-            recursiveGet(project, structure , structure.getRootElement());
-            
-
-            ArrayList<TodoItemNode> todoItemNodes = cache.get(project.getLocationHash());
-            
-            todoItemNodes.forEach((todo) -> {
-                todos.add(todo.getValue());
-            });
 
         }
-
-        ArrayList<SmartTodoItemPointer> nextTodos = new ArrayList();
+        log.debug("BEGIN build tree");
         {
-            // filter
-            todos.forEach((todo) -> {
-                String patternString = todo.getTodoItem().getPattern().getPatternString();
 
-                if (patternString.equals("\\b.*todo\\b.*hbt\\b.*NEXT\\b.*")) {
+            AllTodosTreeBuilder builder = new AllTodosTreeBuilder(new Tree(), project);
+            builder.init();
 
-                    nextTodos.add(todo);
+
+            AbstractTreeStructure structure = builder.getTodoTreeStructure();
+
+            PsiFile[] filesWithTodoItems = ((TodoTreeStructure) structure).getSearchHelper().findFilesWithTodoItems();
+            for (PsiFile file : filesWithTodoItems) {
+
+                TodoPattern todoPattern = new TodoPattern(pattern, TodoAttributesUtil.createDefault(), false);
+                int todoItemsCount = ((TodoTreeStructure) structure).getSearchHelper().getTodoItemsCount(file, todoPattern);
+                if (todoItemsCount > 0) {
+                    log.debug(file.getVirtualFile().getCanonicalPath());
+
+                    TodoItem[] todoItems = ((TodoTreeStructure) structure).getSearchHelper().findTodoItems(file);
+
+                    for (TodoItem pt : todoItems) {
+                        if (pt.getPattern().getPatternString().equalsIgnoreCase(pattern)) {
+                            Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+                            SmartTodoItemPointer smartTodoItemPointer = new SmartTodoItemPointer(pt, document);
+                            todos.add(smartTodoItemPointer);
+                        }
+                    }
+
                 }
-
-            });
+            }
 
         }
+        
+        log.debug("END build tree");
+
+//        ArrayList<SmartTodoItemPointer> nextTodos = new ArrayList();
+//        {
+//            // filter
+//            todos.forEach((todo) -> {
+//                String patternString = todo.getTodoItem().getPattern().getPatternString();
+//                if (patternString.equals(pattern)) {
+//
+//                    nextTodos.add(todo);
+//                }
+//            });
+//        }
 
         ArrayList<SmartTodoItemPointer> sortedTodos = new ArrayList();
         {
@@ -117,8 +180,8 @@ public abstract class ToDoCommonAction extends AnAction {
             int maxNbDots = 0;
             {
 
-                for (int i = 0; i < nextTodos.size(); i++) {
-                    SmartTodoItemPointer todo = nextTodos.get(i);
+                for (int i = 0; i < todos.size(); i++) {
+                    SmartTodoItemPointer todo = todos.get(i);
                     String text = todo.getTodoItem().getFile().getText();
                     int startOffset = todo.getTodoItem().getTextRange().getStartOffset();
                     String strtodo = text.substring(startOffset, todo.getTodoItem().getTextRange().getEndOffset());
