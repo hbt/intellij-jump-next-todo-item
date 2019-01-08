@@ -118,6 +118,9 @@ public abstract class ToDoCommonAction extends AnAction {
     public ArrayList buildList(Project project) {
         ArrayList todosMap = new ArrayList();
         String pattern = "\\b.*todo\\b.*hbt\\b.*NEXT\\b.*";
+        String[] todoPatterns = {"TODO(hbt) NEXT", "TODO[hbt] NEXT"};
+
+        
 
         ArrayList<SmartTodoItemPointer> todos = new ArrayList();
         
@@ -138,6 +141,14 @@ public abstract class ToDoCommonAction extends AnAction {
             for (PsiFile file : filesWithTodoItems) {
 
                 TodoPattern todoPattern = new TodoPattern(pattern, TodoAttributesUtil.createDefault(), false);
+                
+//                TodoItem[] todoItems1 = ((TodoTreeStructure) structure).getSearchHelper().findTodoItems(file);
+//                for (TodoItem pt : todoItems1) {
+//                    Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+//                    SmartTodoItemPointer smartTodoItemPointer = new SmartTodoItemPointer(pt, document);
+//                    todos.add(smartTodoItemPointer);
+//                }
+                
                 int todoItemsCount = ((TodoTreeStructure) structure).getSearchHelper().getTodoItemsCount(file, todoPattern);
                 if (todoItemsCount > 0) {
                     log.debug(file.getVirtualFile().getCanonicalPath());
@@ -145,7 +156,8 @@ public abstract class ToDoCommonAction extends AnAction {
                     TodoItem[] todoItems = ((TodoTreeStructure) structure).getSearchHelper().findTodoItems(file);
 
                     for (TodoItem pt : todoItems) {
-                        if (pt.getPattern().getPatternString().equalsIgnoreCase(pattern)) {
+                        if (pt.getPattern().getPatternString().equalsIgnoreCase(pattern)) 
+                        {
                             Document document = PsiDocumentManager.getInstance(project).getDocument(file);
                             SmartTodoItemPointer smartTodoItemPointer = new SmartTodoItemPointer(pt, document);
                             todos.add(smartTodoItemPointer);
@@ -153,23 +165,24 @@ public abstract class ToDoCommonAction extends AnAction {
                     }
 
                 }
+                
             }
 
         }
         
         log.debug("END build tree");
 
-//        ArrayList<SmartTodoItemPointer> nextTodos = new ArrayList();
-//        {
-//            // filter
-//            todos.forEach((todo) -> {
-//                String patternString = todo.getTodoItem().getPattern().getPatternString();
-//                if (patternString.equals(pattern)) {
-//
-//                    nextTodos.add(todo);
-//                }
-//            });
-//        }
+        ArrayList<SmartTodoItemPointer> nextTodos = new ArrayList();
+        {
+            // filter
+            todos.forEach((todo) -> {
+                String patternString = todo.getTodoItem().getPattern().getPatternString();
+                if (patternString.equals(pattern)) 
+                {
+                    nextTodos.add(todo);
+                }
+            });
+        }
 
         ArrayList<SmartTodoItemPointer> sortedTodos = new ArrayList();
         {
@@ -180,12 +193,15 @@ public abstract class ToDoCommonAction extends AnAction {
             int maxNbDots = 0;
             {
 
-                for (int i = 0; i < todos.size(); i++) {
-                    SmartTodoItemPointer todo = todos.get(i);
+                for (int i = 0; i < nextTodos.size(); i++) {
+                    SmartTodoItemPointer todo = nextTodos.get(i);
                     String text = todo.getTodoItem().getFile().getText();
                     int startOffset = todo.getTodoItem().getTextRange().getStartOffset();
                     String strtodo = text.substring(startOffset, todo.getTodoItem().getTextRange().getEndOffset());
-                    strtodo = strtodo.replace("TODO(hbt) NEXT", "").trim();
+                    for(String pt: todoPatterns) 
+                    {
+                        strtodo = strtodo.replace(pt,"").trim();
+                    }
 
                     String[] parts = strtodo.split(" ");
                     if (parts.length > 0) {
