@@ -1,1 +1,6 @@
-- fix case for functionshub log. used to work. 
+- fix bookmark goto. use another method. it is fucking up the bookmarking.
+    Case: 
+        - bookmark
+        - gk
+        - bookmark is removed or adding 2 bookmarks on the gk line
+
