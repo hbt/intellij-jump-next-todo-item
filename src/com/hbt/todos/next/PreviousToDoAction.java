@@ -42,6 +42,11 @@ public class PreviousToDoAction extends ToDoCommonAction {
             nextIndex = todosMap.size()-1;
         }
 
+        if(log.isDebugEnabled())
+        {
+            viewTodos(todosMap);
+        }
+        
         jump(e, todosMap, nextIndex);
 
     }

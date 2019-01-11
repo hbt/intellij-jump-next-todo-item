@@ -40,6 +40,11 @@ public class NextToDoAction extends ToDoCommonAction {
         if (nextIndex >= todosMap.size()) {
             nextIndex = 0;
         }
+        
+        if(log.isDebugEnabled())
+        {
+            viewTodos(todosMap);
+        }
 
         jump(e, todosMap, nextIndex);
 

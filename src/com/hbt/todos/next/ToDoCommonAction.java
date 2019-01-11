@@ -2,11 +2,14 @@ package com.hbt.todos.next;
 
 import com.intellij.ide.todo.*;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.editor.Document;
 import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.impl.PsiAwareFileEditorManagerImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -17,12 +20,14 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.checkin.CheckinHandler;
 import com.intellij.openapi.vcs.checkin.TodoCheckinHandlerWorker;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.TodoAttributes;
 import com.intellij.psi.search.TodoAttributesUtil;
 import com.intellij.psi.search.TodoItem;
 import com.intellij.psi.search.TodoPattern;
+import com.intellij.psi.util.PsiEditorUtil;
 import org.jetbrains.annotations.NotNull;
 
 import com.hbt.utils.MyLogger;
@@ -48,21 +53,33 @@ public abstract class ToDoCommonAction extends AnAction {
 //    protected static final Logger LOG = Logger.getInstance(TodoPanel.class);
     public static Logger log = MyLogger.getLogger();
     public static HashMap<Project, Integer> last = new HashMap();
+    /**
+     * @deprecated 
+     */
+    static HashMap<String, ArrayList<TodoItemNode>> cache = new HashMap<>();
 
+    public void viewTodos(ArrayList todosMap){
+
+        todosMap.forEach((todo) -> {
+
+            Object[] nextItem = (Object[]) todo;
+            VirtualFile file = (VirtualFile) nextItem[0];
+            Integer lineNumber = (Integer) nextItem[1];
+            log.debug(file + " " + lineNumber);
+        });
+    }
 
     public void jump(AnActionEvent e, ArrayList todosMap, int nextIndex) {
         Object[] nextItem = (Object[]) todosMap.get(nextIndex);
         VirtualFile file = (VirtualFile) nextItem[0];
         Integer lineNumber = (Integer) nextItem[1];
 
+        log.debug("jump to " + file + " " + lineNumber);
 
-        BookmarkManager bookmarkManager = BookmarkManager.getInstance(e.getProject());
-        bookmarkManager.addTextBookmark(file, lineNumber, "");
-        List<Bookmark> validBookmarks = bookmarkManager.getValidBookmarks();
-        Bookmark bookmark = validBookmarks.get(validBookmarks.size() - 1);
-        bookmark.navigate(true);
-        bookmarkManager.removeBookmark(bookmark);
+        Navigatable navigatable = PsiNavigationSupport.getInstance().createNavigatable(e.getProject(), file, lineNumber);
+        navigatable.navigate(true);
 
+        log.debug("INDEX: " + nextIndex);
         last.put(e.getProject(), nextIndex);
     }
 
@@ -75,7 +92,6 @@ public abstract class ToDoCommonAction extends AnAction {
         return nextIndex;
     }
 
-    static HashMap<String, ArrayList<TodoItemNode>> cache = new HashMap<>();
     
     public void recursiveGet(Project p, AbstractTreeStructure structure, Object obj) {
         Object[] children = structure.getChildElements(obj);
@@ -279,7 +295,7 @@ public abstract class ToDoCommonAction extends AnAction {
                 SmartTodoItemPointer todo = sortedTodos.get(i);
                 int startOffset = todo.getTodoItem().getTextRange().getStartOffset();
                 int lineStartOffset = todo.getDocument().getLineNumber(startOffset);
-                todosMap.add(new Object[]{todo.getTodoItem().getFile().getVirtualFile(), lineStartOffset});
+                todosMap.add(new Object[]{todo.getTodoItem().getFile().getVirtualFile(), todo.getRangeMarker().getStartOffset()});
             }
         }
 
