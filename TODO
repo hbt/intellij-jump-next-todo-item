@@ -1,3 +1,4 @@
+- fix order not working - view tmp2 case - maybe get rid of cache
 - fix bookmark goto. use another method. it is fucking up the bookmarking.
     Case: 
         - bookmark
