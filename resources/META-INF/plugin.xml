@@ -39,6 +39,8 @@
             text="PreviousToDoAction" description="jump to previous todo item">
       <keyboard-shortcut keymap="$default" first-keystroke="alt COMMA"/>
     </action>
+      <action id="CurrentToDoAction" class="com.hbt.todos.next.CurrentToDoAction" text="CurrentToDoAction"
+              description="CurrentToDoAction"/>
   </actions>
 
 </idea-plugin>

@@ -1,1 +1,2 @@
-
+- add cmd to jump to current NEXT -- instead of doing gj gk when moving around 
+- add cmd to jump to next bookmark even if it is in another file. 
