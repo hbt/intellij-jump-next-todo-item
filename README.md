@@ -1,3 +1,7 @@
+# Deprecated
+
+merged into https://github.com/hbt/ideavim
+
 ## What is it?
 
 Jump between todos in your code (like bookmarked locations).
